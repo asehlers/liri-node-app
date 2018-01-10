@@ -2,6 +2,9 @@
 var keys = require("./keys.js");
 var Twitter = require("twitter");
 var Spotify = require("node-spotify-api");
+var request = require("request");
+var fs = require("fs");
+
 //set up twitter api keys
 var twitterKeys = keys.twitterKeys;
 var consumer_key = twitterKeys.consumer_key;
@@ -34,7 +37,7 @@ var spotify = new Spotify({
 
 //get command line input
 if(process.argv[2] !== undefined){
-	var command = process.argv[2];
+	var command = process.argv[2].trim();
 }else{
 	console.log("command not recognized");
 }
@@ -44,14 +47,22 @@ if(command === "my-tweets"){
 	getTweets();
 }else if(command === "spotify-this-song"){
 	if(process.argv[3] === undefined){
-		var song = "The+Sign";
+		var song = "The Sign";
 	}else{
 		var song = process.argv[3].trim();
-		song.replace("\s", "+");
-		song = "\"" + song + "\"";
 		console.log("song: " + song);
 	}
 	getSong(song);
+}else if(command === "movie-this"){
+	if(process.argv[3] === undefined){
+		var movie = "Mr. Nobody";
+	}else{
+		var movie = process.argv[3].trim();
+		console.log("movie: " + movie);
+	}
+	getMovie(movie);
+}else if(command === "do-what-it-says"){
+	doFile();
 }
 
 
@@ -66,18 +77,33 @@ function getTweets(){
 		for(var i = 0; i < tweets.length; i++){
 			console.log(tweets[i].text);
 			console.log(tweets[i].created_at);
+			fs.appendFile(textFile, "Hello Kitty", function(err) {
+
+  			// If an error was experienced we say it.
+  		// 	if (err) {
+    // 			console.log(err);
+  		// 	}
+
+  		// 	// If no error is experienced, we'll log the phrase "Content Added" to our node console.
+  		// 	else {
+    // 		console.log("Content Added!");
+ 			// }			
+
+});
 		}
 	});
 }
 
 function getSong(song){
+	song.replace("\s", "+");
+	song = "\"" + song + "\"";
 	var query = "https://api.spotify.com/v1/search?q=\""+song+"\"&type=track&limit=1&market=US";
-	console.log(query);
+	// console.log(query);
 	spotify.request(query).then(function(data){
 		// console.log(data);
-	console.log(data.tracks.items)
+	// console.log(data.tracks.items)
 	var spotifiedSong = data.tracks.items[0];
-	console.log("Artists: " + spotifiedSong.album.artists.join(", "));
+	console.log("Artists: " + spotifiedSong.album.artists[0].name);
 	console.log("Song Name: " + spotifiedSong.name);
 	console.log("Preview: " + spotifiedSong.external_urls.spotify);
 	console.log("Album: " + spotifiedSong.album.name);
@@ -85,4 +111,61 @@ function getSong(song){
 	.catch(function(err){
 		console.error('Error occurred: ' + err);
 	});
+}
+
+function getMovie(movie){
+	movie.replace("\s", "+");
+	movie = "\"" + movie + "\"";
+	var query = "http://www.omdbapi.com/?apikey=trilogy&t=" + movie;
+	request(query, function(error, data, body){
+		if(error){
+			console.log(error);
+		}
+
+		// console.log(data);
+		// console.log(body);
+		var movieInfo = JSON.parse(body);
+		console.log("Title: " + movieInfo["Title"]);
+		console.log("Release year: " + movieInfo.Year);
+		console.log("IMDB Rating: " + movieInfo.imdbRating);
+		for(var i = 0; i < movieInfo.Ratings.length; i ++){
+			if(movieInfo.Ratings[i].Source == "Rotten Tomatoes"){
+				console.log("Rotten Tomatoes: " + movieInfo.Ratings[i].Value);
+				i = movieInfo.Ratings.length;
+			}
+		}
+		console.log("Country: " + movieInfo.Country);
+		console.log("Language: " + movieInfo.Language);
+		console.log("Plot: " + movieInfo.Plot);
+		console.log("Actors: " + movieInfo.Actors);
+
+	});
+}
+
+function doFile(){
+	fs.readFile("random.txt", "utf8", function(error, data) {
+
+  // If the code experiences any errors it will log the error to the console.
+  if (error) {
+    return console.log(error);
+  }
+
+  // We will then print the contents of data
+  console.log(data);
+  var inputs = data.split("\n");
+  console.log(inputs);
+  for(var j = 0; j < inputs.length; j++){
+ 	 	// Then split it by commas (to make it more readable)
+ 	 	var dataArr = inputs[j].split(", ");
+
+	  // We will then re-display the content as an array for later use.
+	  if(dataArr[0].trim() === "my-tweets"){
+	  	getTweets();
+	  }else if(dataArr[0].trim() === "spotify-this-song"){
+	  	getSong(dataArr[1].trim());
+	  }else if(dataArr[0].trim() === "movie-this"){
+	  	getMovie(dataArr[1].trim());
+	  }
+	}
+});
 }
