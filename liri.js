@@ -42,7 +42,7 @@ if(process.argv[2] !== undefined){
 	console.log("command not recognized");
 }
 
-
+//calls function based on commands given
 if(command === "my-tweets"){
 	getTweets();
 }else if(command === "spotify-this-song"){
@@ -66,7 +66,7 @@ if(command === "my-tweets"){
 }
 
 
-
+//interacts with twitter npm to retrieve 20 most recent tweets
 function getTweets(){
 	client.get("https://api.twitter.com/1.1/statuses/home_timeline.json", function(error, tweets, response){
 		if(error){
@@ -94,6 +94,8 @@ function getTweets(){
 	});
 }
 
+
+//interacts with node-spotify-api to retrieve information given a song title
 function getSong(song){
 	song.replace("\s", "+");
 	song = "\"" + song + "\"";
@@ -113,6 +115,7 @@ function getSong(song){
 	});
 }
 
+//uses request api to interact with omdb api and retireive movie info by title
 function getMovie(movie){
 	movie.replace("\s", "+");
 	movie = "\"" + movie + "\"";
@@ -142,6 +145,8 @@ function getMovie(movie){
 	});
 }
 
+
+//reads random.txt and parses commands to follow 
 function doFile(){
 	fs.readFile("random.txt", "utf8", function(error, data) {
 
